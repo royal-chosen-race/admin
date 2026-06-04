@@ -15,7 +15,7 @@
 
 <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
 <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
-<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone@7.24.7/babel.min.js"></script>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -308,6 +308,74 @@ const DEFAULT_DATA = {
     "colors": { "brand": "#003380", "cardBg": "#E6F0FA", "border": "#8AA8C8", "text": "#111111" }
 };
 
+// 將 Firebase 舊資料／不完整資料補齊，避免 .map() / .filter() 因 undefined 造成白屏
+const normalizeData = (cloudData = {}) => {
+  const safeArray = (value, fallback = []) => Array.isArray(value) ? value : fallback;
+  const safeObject = (value, fallback = {}) => (value && typeof value === 'object' && !Array.isArray(value)) ? value : fallback;
+
+  const source = safeObject(cloudData, {});
+  const merged = {
+    ...DEFAULT_DATA,
+    ...source,
+    layout: {
+      ...DEFAULT_DATA.layout,
+      ...safeObject(source.layout, {})
+    },
+    theme: {
+      ...DEFAULT_DATA.theme,
+      ...safeObject(source.theme, {})
+    },
+    songs: {
+      ...DEFAULT_DATA.songs,
+      ...safeObject(source.songs, {})
+    },
+    groups: {
+      ...DEFAULT_DATA.groups,
+      ...safeObject(source.groups, {})
+    },
+    offering: {
+      ...DEFAULT_DATA.offering,
+      ...safeObject(source.offering, {})
+    },
+    office: {
+      ...DEFAULT_DATA.office,
+      ...safeObject(source.office, {})
+    },
+    colors: {
+      ...DEFAULT_DATA.colors,
+      ...safeObject(source.colors, {})
+    }
+  };
+
+  merged.sermonOutline = safeArray(merged.sermonOutline, DEFAULT_DATA.sermonOutline).map(item => ({
+    title: item?.title || '',
+    content: safeArray(item?.content, [])
+  }));
+
+  merged.schedule = safeArray(merged.schedule, DEFAULT_DATA.schedule).map(item => ({
+    start: item?.start || '',
+    end: item?.end || '',
+    task: item?.task || ''
+  }));
+
+  merged.announcements = safeArray(merged.announcements, DEFAULT_DATA.announcements).map((item, index) => ({
+    id: item?.id || Date.now() + index,
+    title: item?.title || '',
+    date: item?.date || '',
+    detail: item?.detail || ''
+  }));
+
+  merged.songs.worship = safeArray(merged.songs.worship, []);
+  merged.songs.response = safeArray(merged.songs.response, []);
+
+  merged.groups.weekday = safeArray(merged.groups.weekday, []);
+  merged.groups.sunday = safeArray(merged.groups.sunday, []);
+  merged.groups.special = safeArray(merged.groups.special, []);
+  merged.overseas = safeArray(merged.overseas, []);
+
+  return merged;
+};
+
 // ================= UI 元件 =================
 const Btn = ({onClick, children, variant='default', size='md', className='', disabled=false, style={}}) => {
   const base = "btn-base";
@@ -349,20 +417,22 @@ const Field = ({label, children}) => <div style={{marginBottom:'16px'}}><label>{
 
 // ================= 預覽 A4 介面 =================
 const BulletinPreview = ({ data, outlineRef, announcementsRef, isHidden = false }) => {
-  const parts = data.bulletinDate.split('-');
+  const safeData = normalizeData(data || DEFAULT_DATA);
+  const parts = (safeData.bulletinDate || '').split('-');
   const year = parts[0] || '2026';
   const mmdd = parts.length === 3 ? `${parts[1]}/${parts[2]}` : '12/26';
 
-  const isLongOutline = data.layout?.longOutline || false;
-  const specialGroups = data.groups.special.filter(g => g.category === '特色' || !g.category);
-  const readingGroups = data.groups.special.filter(g => g.category === '讀經');
-  const outOfTownGroups = data.groups.special.filter(g => g.category === '外縣市');
+  const isLongOutline = safeData.layout?.longOutline || false;
+  const groupSpecial = safeData.groups?.special || [];
+  const specialGroups = groupSpecial.filter(g => g.category === '特色' || !g.category);
+  const readingGroups = groupSpecial.filter(g => g.category === '讀經');
+  const outOfTownGroups = groupSpecial.filter(g => g.category === '外縣市');
 
   const dynamicStyles = {
-    '--brand-blue': data.colors?.brand || '#003380',
-    '--card-bg': data.colors?.cardBg || '#E6F0FA',
-    '--border-color': data.colors?.border || '#8AA8C8',
-    '--pdf-text': data.colors?.text || '#111111'
+    '--brand-blue': safeData.colors?.brand || '#003380',
+    '--card-bg': safeData.colors?.cardBg || '#E6F0FA',
+    '--border-color': safeData.colors?.border || '#8AA8C8',
+    '--pdf-text': safeData.colors?.text || '#111111'
   };
 
   return (
@@ -384,10 +454,10 @@ const BulletinPreview = ({ data, outlineRef, announcementsRef, isHidden = false 
             </div>
             <div className="pdf-vision">
               <div className="pdf-vision-title">— {year} 年度異象 —</div>
-              <div className="pdf-vision-text">{data.vision}</div>
+              <div className="pdf-vision-text">{safeData.vision}</div>
             </div>
             <div className="pdf-date-box">
-              <div className="pdf-date-week">{data.weekNumber}</div>
+              <div className="pdf-date-week">{safeData.weekNumber}</div>
               <div className="pdf-date-num">{year}<br/>{mmdd}</div>
             </div>
           </div>
@@ -395,14 +465,14 @@ const BulletinPreview = ({ data, outlineRef, announcementsRef, isHidden = false 
           <div className="pdf-theme-box">
             <div className="pdf-theme-top">
               <div className="pdf-theme-badge">主題</div>
-              <div className="pdf-theme-title">{data.theme.title}</div>
+              <div className="pdf-theme-title">{safeData.theme.title}</div>
               <div className="pdf-theme-speakers">
-                講員 <span>|</span> {data.theme.speaker} &nbsp;&nbsp; 司會 <span>|</span> {data.theme.moderator}
+                講員 <span>|</span> {safeData.theme.speaker} &nbsp;&nbsp; 司會 <span>|</span> {safeData.theme.moderator}
               </div>
             </div>
             <div className="pdf-theme-bottom">
               <div className="pdf-theme-bottom-label">經文</div>
-              <div>{data.theme.scripture}</div>
+              <div>{safeData.theme.scripture}</div>
             </div>
           </div>
 
@@ -411,14 +481,12 @@ const BulletinPreview = ({ data, outlineRef, announcementsRef, isHidden = false 
               <div className="pdf-card">
                 <div className="pdf-card-title">📖 信息大綱</div>
                 <div ref={outlineRef} style={{overflow: 'hidden', flex: '1 1 0%', minHeight: 0}}>
-                  {(data.sermonOutline || []).map((item, idx) => (
-  <div key={idx} style={{marginBottom: '8px'}}>
-    <div className="content-heading">{item.title || ''}</div>
-    {(item.content || []).map((c, ci) => (
-      <div key={ci} className="outline-text">{c}</div>
-    ))}
-  </div>
-))}
+                  {safeData.sermonOutline.map((item, idx) => (
+                    <div key={idx} style={{marginBottom: '8px'}}>
+                      <div className="content-heading">{item.title}</div>
+                      {item.content.map((c, ci) => (
+                        <div key={ci} className="outline-text">{c}</div>
+                      ))}
                     </div>
                   ))}
                 </div>
@@ -429,7 +497,7 @@ const BulletinPreview = ({ data, outlineRef, announcementsRef, isHidden = false 
                   <div className="pdf-card-title">📅 聚會流程</div>
                   <table className="clean-schedule-table">
                     <tbody>
-                      {data.schedule.map((item, idx) => (
+                      {safeData.schedule.map((item, idx) => (
                         <tr key={idx}>
                           <td style={{ fontWeight:'bold', width: '90px' }}>{item.start}-{item.end}</td>
                           <td>{item.task}</td>
@@ -445,7 +513,7 @@ const BulletinPreview = ({ data, outlineRef, announcementsRef, isHidden = false 
               <div className="pdf-card">
                 <div className="pdf-card-title">🔔 教會消息</div>
                 <div ref={announcementsRef} style={{overflow: 'hidden', flex: '1 1 0%', minHeight: 0}}>
-                  {data.announcements.map((a, idx) => (
+                  {safeData.announcements.map((a, idx) => (
                     <div key={idx} style={{ marginBottom: '10px' }}>
                       <div className="content-heading">
                         {["一","二","三","四","五"][idx] || idx+1}、{a.title}
@@ -464,7 +532,7 @@ const BulletinPreview = ({ data, outlineRef, announcementsRef, isHidden = false 
                     <div className="pdf-card-title" style={{ fontSize: '15px', marginBottom: '8px' }}>📅 聚會流程</div>
                     <table className="clean-schedule-table" style={{ fontSize: '12.5px' }}>
                       <tbody>
-                        {data.schedule.map((item, idx) => (
+                        {safeData.schedule.map((item, idx) => (
                           <tr key={idx}>
                             <td style={{ fontWeight:'bold', width: '80px', padding: '2px 0' }}>{item.start}-{item.end}</td>
                             <td style={{ padding: '2px 0' }}>{item.task}</td>
@@ -478,11 +546,11 @@ const BulletinPreview = ({ data, outlineRef, announcementsRef, isHidden = false 
                     <div className="pdf-card-title" style={{ fontSize: '15px', marginBottom: '8px' }}>🎵 敬拜詩歌</div>
                     <div className="song-category-title" style={{ fontSize: '12.5px', marginTop: '4px' }}>敬拜歌曲</div>
                     <ol className="custom-list" style={{ fontSize: '12.5px', marginBottom: '6px' }}>
-                      {data.songs.worship.map((s, i) => <li key={i}>{s}</li>)}
+                      {safeData.songs.worship.map((s, i) => <li key={i}>{s}</li>)}
                     </ol>
                     <div className="song-category-title" style={{ fontSize: '12.5px' }}>回應詩歌</div>
                     <ul className="custom-list" style={{ listStyleType: 'none', paddingLeft: '4px', fontSize: '12.5px' }}>
-                      {data.songs.response.map((s, i) => <li key={i}>{s}</li>)}
+                      {safeData.songs.response.map((s, i) => <li key={i}>{s}</li>)}
                     </ul>
                   </div>
                 </div>
@@ -493,13 +561,13 @@ const BulletinPreview = ({ data, outlineRef, announcementsRef, isHidden = false 
                     <div>
                       <div className="song-category-title" style={{ marginTop: '4px' }}>敬拜歌曲</div>
                       <ol className="custom-list">
-                        {data.songs.worship.map((s, i) => <li key={i}>{s}</li>)}
+                        {safeData.songs.worship.map((s, i) => <li key={i}>{s}</li>)}
                       </ol>
                     </div>
                     <div style={{ borderLeft: '1px solid var(--border-color)', paddingLeft: '12px' }}>
                       <div className="song-category-title" style={{ marginTop: '4px' }}>回應詩歌</div>
                       <ul className="custom-list" style={{ listStyleType: 'none', paddingLeft: '4px' }}>
-                        {data.songs.response.map((s, i) => <li key={i}>{s}</li>)}
+                        {safeData.songs.response.map((s, i) => <li key={i}>{s}</li>)}
                       </ul>
                     </div>
                   </div>
@@ -519,7 +587,7 @@ const BulletinPreview = ({ data, outlineRef, announcementsRef, isHidden = false 
             <table className="pdf-table">
               <thead><tr><th>週間小組名稱</th><th>聚會時間</th><th>組長</th><th>地點</th></tr></thead>
               <tbody>
-                {data.groups.weekday.map((g, i) => (
+                {safeData.groups.weekday.map((g, i) => (
                   <tr key={'w'+i}><td>{g.name}</td><td>{g.time}</td><td>{g.leader}</td><td>{g.loc}</td></tr>
                 ))}
               </tbody>
@@ -527,7 +595,7 @@ const BulletinPreview = ({ data, outlineRef, announcementsRef, isHidden = false 
             <table className="pdf-table">
               <thead><tr><th>主日/青年小組</th><th>聚會時間</th><th>組長</th><th>地點</th></tr></thead>
               <tbody>
-                {data.groups.sunday.map((g, i) => (
+                {safeData.groups.sunday.map((g, i) => (
                   <tr key={'s'+i}><td>{g.name}</td><td>{g.time}</td><td>{g.leader}</td><td>{g.loc}</td></tr>
                 ))}
               </tbody>
@@ -575,7 +643,7 @@ const BulletinPreview = ({ data, outlineRef, announcementsRef, isHidden = false 
           <div className="pdf-card" style={{ marginBottom: '20px' }}>
             <div className="pdf-card-title">🌍 海外分會</div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
-              {data.overseas.map((o, i) => (
+              {safeData.overseas.map((o, i) => (
                 <div key={i} style={{ fontSize: '13px', color: 'var(--pdf-text, #111111)', lineHeight: '1.6' }}>
                   <div style={{ fontWeight: 'bold', color: 'var(--brand-blue)', fontSize: '14px', marginBottom: '4px' }}>{o.flag} {o.name}</div>
                   <div>牧師：{o.leader}</div>
@@ -590,17 +658,17 @@ const BulletinPreview = ({ data, outlineRef, announcementsRef, isHidden = false 
             <div>
               <div className="pdf-dark-title">🎁 奉獻帳戶資訊</div>
               <div className="pdf-dark-text">
-                戶名：{data.offering.name}<br/>
-                帳號：{data.offering.bank} &nbsp; {data.offering.account}<br/>
+                戶名：{safeData.offering.name}<br/>
+                帳號：{safeData.offering.bank} &nbsp; {safeData.offering.account}<br/>
                 <span style={{ borderBottom: '1px solid #cbd5e1', marginTop: '4px', display: 'inline-block' }}>* 透過銀行轉帳奉獻後，請通知辦公室同工 *</span>
               </div>
             </div>
             <div>
               <div className="pdf-dark-title">📞 聯絡我們</div>
               <div className="pdf-dark-text">
-                {data.office.name}<br/>
-                電話：{data.office.phone}<br/>
-                地址：{data.office.address}
+                {safeData.office.name}<br/>
+                電話：{safeData.office.phone}<br/>
+                地址：{safeData.office.address}
               </div>
             </div>
           </div>
@@ -653,11 +721,9 @@ function App() {
     bulletinRef.on('value', (snapshot) => {
       const cloudData = snapshot.val();
       if (cloudData) {
-        if (!cloudData.layout) cloudData.layout = { longOutline: false };
-        if (!cloudData.colors) cloudData.colors = { brand: "#003380", cardBg: "#E6F0FA", border: "#8AA8C8", text: "#111111" };
-        setData(cloudData);
+        setData(normalizeData(cloudData));
       } else {
-        setData(DEFAULT_DATA);
+        setData(normalizeData(DEFAULT_DATA));
       }
       setIsConnected(true);
     });
