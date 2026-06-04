@@ -411,12 +411,14 @@ const BulletinPreview = ({ data, outlineRef, announcementsRef, isHidden = false 
               <div className="pdf-card">
                 <div className="pdf-card-title">📖 信息大綱</div>
                 <div ref={outlineRef} style={{overflow: 'hidden', flex: '1 1 0%', minHeight: 0}}>
-                  {data.sermonOutline.map((item, idx) => (
-                    <div key={idx} style={{marginBottom: '8px'}}>
-                      <div className="content-heading">{item.title}</div>
-                      {item.content.map((c, ci) => (
-                        <div key={ci} className="outline-text">{c}</div>
-                      ))}
+                  {(data.sermonOutline || []).map((item, idx) => (
+  <div key={idx} style={{marginBottom: '8px'}}>
+    <div className="content-heading">{item.title || ''}</div>
+    {(item.content || []).map((c, ci) => (
+      <div key={ci} className="outline-text">{c}</div>
+    ))}
+  </div>
+))}
                     </div>
                   ))}
                 </div>
