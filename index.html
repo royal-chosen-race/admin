@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>風一族週報後台管理系統 v4.0</title>
+<title>風一族週報後台管理系統 v4.1</title>
 
 <link rel="icon" type="image/png" href="favicon_io/android-chrome-512x512.png">
 <link rel="apple-touch-icon" href="favicon_io/apple-touch-icon.png">
@@ -251,7 +251,7 @@
   .pdf-col { display: grid; gap: 12px; height: 100%; min-height: 0; } 
   .pdf-card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 8px; padding: 12px 14px; overflow: hidden; display: flex; flex-direction: column;}
   .pdf-card-title { color: var(--brand-blue); font-weight: bold; font-size: 16px; margin-bottom: 10px; display: flex; align-items: center; gap: 6px; border-bottom: 2px solid var(--border-color); padding-bottom: 6px; flex-shrink: 0;}
-  .content-heading { font-weight: 700; font-size: 14px; color: var(--brand-blue); margin-bottom: 4px; margin-top: 8px;}
+  .content-heading { font-weight: 700; font-size: 14px; color: var(--brand-blue); margin-bottom: 4px; margin-top: 8px; white-space: pre-line; }
   .content-heading:first-child { margin-top: 0; }
   .outline-text { font-size: 13.5px; margin-left: 4px; margin-bottom: 4px; white-space: pre-wrap; color: var(--pdf-text, #111111); line-height: 1.5; display: block; }
   .custom-list { padding-left: 16px; font-size: 13.5px; margin-bottom: 8px; color: var(--pdf-text, #111111); line-height: 1.5; }
@@ -755,7 +755,7 @@ function App() {
             <div style={{width:'48px', height:'48px', background:'var(--primary)', borderRadius:'12px', display:'flex', alignItems:'center', justifyContent:'center', color:'var(--on-primary)', margin:'0 auto 16px'}}>
               <span className="material-symbols-outlined" style={{fontSize:'28px'}}>church</span>
             </div>
-            <h2 style={{color:'var(--text-main)', fontSize:'20px'}}>風一族週報後台管理系統 v4.0</h2>
+            <h2 style={{color:'var(--text-main)', fontSize:'20px'}}>風一族週報後台管理系統 v4.1</h2>
           </div>
           <form onSubmit={handleLogin}>
             <Field label="帳號 (Email)"><input type="email" required value={email} onChange={e=>setEmail(e.target.value)} /></Field>
@@ -972,9 +972,22 @@ function App() {
                 }}><span className="material-symbols-outlined">delete</span></button>
               </div>
               
-              <Field label="段落標題"><input value={item.title} onChange={e=>{
-                const n = [...data.sermonOutline]; n[idx].title = e.target.value; update('sermonOutline', n);
-              }}/></Field>
+              <Field label="段落標題（可按 Enter 手動換行）">
+                <textarea
+                  rows={2}
+                  value={item.title}
+                  placeholder={'例如：三、不要求自己的益處，乃要求別人的益處\n（賽55/8-9）'}
+                  onChange={e=>{
+                    const n = [...data.sermonOutline];
+                    n[idx].title = e.target.value;
+                    update('sermonOutline', n);
+                  }}
+                  style={{ minHeight: '72px' }}
+                />
+                <div style={{fontSize:'12px', color:'var(--text-muted)', marginTop:'6px'}}>
+                  提示：在需要斷行的位置按 Enter，預覽與輸出的 PDF 會保留換行。
+                </div>
+              </Field>
               
               <label>內容要點</label>
               {item.content.map((c, ci)=>(
