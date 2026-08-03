@@ -264,7 +264,7 @@
   .pdf-table td { background: white; border: 1px solid var(--border-color); padding: 6px 4px; color: var(--pdf-text, #111111); }
   .pdf-table tr:nth-child(even) td { background: #fbfbfc; }
   .pdf-page-2-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px; }
-  .pdf-page-2-special-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-bottom: 15px; }
+  .pdf-page-2-special-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 15px; }
   .pdf-dark-footer { background: var(--brand-blue); color: white; padding: 15px 20px; border-radius: 8px; display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: auto; }
   .pdf-dark-title { font-size: 14px; font-weight: bold; margin-bottom: 6px; display: flex; align-items: center; gap: 6px; }
   .pdf-dark-text { font-size: 12px; color: #cbd5e1; line-height: 1.5; }
@@ -603,42 +603,32 @@ const BulletinPreview = ({ data, outlineRef, announcementsRef, isHidden = false 
           </div>
 
           <div className="pdf-page-2-special-grid">
-            <div className="pdf-card" style={{ padding: '15px' }}>
-              <div className="pdf-card-title" style={{ fontSize: '15px' }}>⭐ 特色團契 / 課程</div>
-              {specialGroups.length > 0 ? specialGroups.map((g, i) => (
-                <div key={i} style={{ marginBottom: '12px', fontSize: '13px', color: 'var(--pdf-text, #111111)', lineHeight: '1.5' }}>
-                  <div style={{ fontWeight: 'bold', color: 'var(--brand-blue)', fontSize: '14px' }}>{g.name}</div>
-                  <div>{g.time}</div>
-                  <div>{g.loc}</div>
-                  <div>負責：{g.leader}</div>
-                </div>
-              )) : <div style={{ fontSize: '13px', color: '#888', fontStyle: 'italic' }}>無資料</div>}
-            </div>
+  {/* 左欄：特色團契 / 課程 */}
+  <div className="pdf-card" style={{ padding: '15px' }}>
+    <div className="pdf-card-title" style={{ fontSize: '15px' }}>⭐ 特色團契 / 課程</div>
+    {specialGroups.length > 0 ? specialGroups.map((g, i) => (
+      <div key={i} style={{ marginBottom: '12px', fontSize: '13px', color: 'var(--pdf-text, #111111)', lineHeight: '1.5' }}>
+        <div style={{ fontWeight: 'bold', color: 'var(--brand-blue)', fontSize: '14px' }}>{g.name}</div>
+        <div>{g.time}</div>
+        <div>{g.loc}</div>
+        <div>負責：{g.leader}</div>
+      </div>
+    )) : <div style={{ fontSize: '13px', color: '#888', fontStyle: 'italic' }}>無資料</div>}
+  </div>
 
-            <div className="pdf-card" style={{ padding: '15px' }}>
-              <div className="pdf-card-title" style={{ fontSize: '15px' }}>📖 職場讀經小組</div>
-              {readingGroups.length > 0 ? readingGroups.map((g, i) => (
-                <div key={i} style={{ marginBottom: '12px', fontSize: '13px', color: 'var(--pdf-text, #111111)', lineHeight: '1.5' }}>
-                  <div style={{ fontWeight: 'bold', color: 'var(--brand-blue)', fontSize: '14px' }}>{g.name}</div>
-                  <div>{g.time}</div>
-                  <div>{g.loc}</div>
-                  <div>組長：{g.leader}</div>
-                </div>
-              )) : <div style={{ fontSize: '13px', color: '#888', fontStyle: 'italic', textAlign: 'center', marginTop: '30px' }}>目前無資料</div>}
-            </div>
-
-            <div className="pdf-card" style={{ padding: '15px' }}>
-              <div className="pdf-card-title" style={{ fontSize: '15px' }}>📍 外縣市小組</div>
-              {outOfTownGroups.length > 0 ? outOfTownGroups.map((g, i) => (
-                <div key={i} style={{ marginBottom: '12px', fontSize: '13px', color: 'var(--pdf-text, #111111)', lineHeight: '1.5' }}>
-                  <div style={{ fontWeight: 'bold', color: 'var(--brand-blue)', fontSize: '14px' }}>{g.name}</div>
-                  <div>{g.time}</div>
-                  <div>{g.loc}</div>
-                  <div>組長：{g.leader}</div>
-                </div>
-              )) : <div style={{ fontSize: '13px', color: '#888', fontStyle: 'italic', textAlign: 'center', marginTop: '30px' }}>目前無資料</div>}
-            </div>
-          </div>
+  {/* 右欄：外縣市小組 */}
+  <div className="pdf-card" style={{ padding: '15px' }}>
+    <div className="pdf-card-title" style={{ fontSize: '15px' }}>📍 外縣市小組</div>
+    {outOfTownGroups.length > 0 ? outOfTownGroups.map((g, i) => (
+      <div key={i} style={{ marginBottom: '12px', fontSize: '13px', color: 'var(--pdf-text, #111111)', lineHeight: '1.5' }}>
+        <div style={{ fontWeight: 'bold', color: 'var(--brand-blue)', fontSize: '14px' }}>{g.name}</div>
+        <div>{g.time}</div>
+        <div>{g.loc}</div>
+        <div>組長：{g.leader}</div>
+      </div>
+    )) : <div style={{ fontSize: '13px', color: '#888', fontStyle: 'italic', textAlign: 'center', marginTop: '30px' }}>目前無資料</div>}
+  </div>
+</div>
 
           <div className="pdf-card" style={{ marginBottom: '20px' }}>
             <div className="pdf-card-title">🌍 海外分會</div>
