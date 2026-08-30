@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>風一族週報後台管理系統 v4.7</title>
+<title>風一族週報後台管理系統 v4.8</title>
 
 <link rel="icon" type="image/png" href="favicon_io/android-chrome-512x512.png">
 <link rel="apple-touch-icon" href="favicon_io/apple-touch-icon.png">
@@ -487,13 +487,17 @@
     padding: 13px 18px;
     border-radius: 8px;
     display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 20px;
+    grid-template-columns: 0.92fr 1.08fr;
+    gap: 22px;
     margin-top: 12px;
     flex-shrink: 0;
   }
   .pdf-dark-title { font-size: 14px; font-weight: bold; margin-bottom: 6px; display: flex; align-items: center; gap: 6px; }
   .pdf-dark-text { font-size: 12px; color: #cbd5e1; line-height: 1.5; }
+  .pdf-contact-lines { display: grid; gap: 3px; }
+  .pdf-contact-line { display: grid; grid-template-columns: max-content 1fr; gap: 5px; align-items: start; }
+  .pdf-contact-label { font-weight: 700; color: inherit; white-space: nowrap; }
+  .pdf-contact-value { min-width: 0; overflow-wrap: anywhere; }
   .page2-section-lock { flex-shrink: 0; }
 </style>
 </head>
@@ -536,7 +540,7 @@ const DEFAULT_DATA = {
   overseas: [],
   announcements: [{ id: 1, title: "季同工會通知", date: "5/1登記", detail: "地點：馬可樓" }],
   offering: { name: "社團法人中華基督教風一族職場福音協會", bank: "華南銀行 (008)", account: "101-10-007255-0" },
-  office: { name: "馬可樓辦公室", phone: "(02) 8772-7857", address: "台北市大安區市民大道三段 148 號 4 樓" },
+  office: { name: "馬可樓辦公室", phone: "(02)8772-7857", address: "台北市大安區市民大道三段148號4樓", sundayLocation: "台北科技大學宏裕科技大樓B2國際會議廳（捷運忠孝新生站4號出口）" },
   colors: { brand: "#003380", cardBg: "#E6F0FA", border: "#8AA8C8", text: "#111111" }
 };
 
@@ -653,7 +657,7 @@ const BulletinPreview = ({ data, outlineRef, announcementsRef, page2Ref, isHidde
     {
       key: 'overseas',
       icon: '🌍',
-      title: '分會',
+      title: '海外分會',
       roleLabel: '牧師',
       items: safeData.overseas.map(o => ({ flag: o.flag || '', name: o.name, time: o.time, leader: o.leader, loc: o.loc }))
     }
@@ -888,11 +892,20 @@ const BulletinPreview = ({ data, outlineRef, announcementsRef, page2Ref, isHidde
               </div>
             </div>
             <div>
-              <div className="pdf-dark-title">📞 聯絡我們</div>
-              <div className="pdf-dark-text">
-                {safeData.office.name}<br/>
-                電話：{safeData.office.phone}<br/>
-                地址：{safeData.office.address}
+              <div className="pdf-dark-title">📍 聯絡與主日聚會</div>
+              <div className="pdf-dark-text pdf-contact-lines">
+                <div className="pdf-contact-line">
+                  <span className="pdf-contact-label">電話：</span>
+                  <span className="pdf-contact-value">{safeData.office.phone}</span>
+                </div>
+                <div className="pdf-contact-line">
+                  <span className="pdf-contact-label">馬可樓辦公室地址：</span>
+                  <span className="pdf-contact-value">{safeData.office.address}</span>
+                </div>
+                <div className="pdf-contact-line">
+                  <span className="pdf-contact-label">主日聚會地點：</span>
+                  <span className="pdf-contact-value">{safeData.office.sundayLocation}</span>
+                </div>
               </div>
             </div>
           </div>
@@ -997,7 +1010,7 @@ function App() {
             <div style={{width:'48px', height:'48px', background:'var(--primary)', borderRadius:'12px', display:'flex', alignItems:'center', justifyContent:'center', color:'var(--on-primary)', margin:'0 auto 16px'}}>
               <span className="material-symbols-outlined" style={{fontSize:'28px'}}>church</span>
             </div>
-            <h2 style={{color:'var(--text-main)', fontSize:'20px'}}>風一族週報後台管理系統 v4.7</h2>
+            <h2 style={{color:'var(--text-main)', fontSize:'20px'}}>風一族週報後台管理系統 v4.8</h2>
           </div>
           <form onSubmit={handleLogin}>
             <Field label="帳號 (Email)"><input type="email" required value={email} onChange={e=>setEmail(e.target.value)} /></Field>
@@ -1432,9 +1445,16 @@ function App() {
             <Field label="銀行"><input value={data.offering.bank} onChange={e=>update('offering.bank', e.target.value)}/></Field>
             <Field label="帳號"><input value={data.offering.account} onChange={e=>update('offering.account', e.target.value)}/></Field>
           </Card>
-          <Card><SectionTitle>辦公室</SectionTitle>
+          <Card><SectionTitle>聯絡與主日聚會</SectionTitle>
             <Field label="電話"><input value={data.office.phone} onChange={e=>update('office.phone', e.target.value)}/></Field>
-            <Field label="地址"><input value={data.office.address} onChange={e=>update('office.address', e.target.value)}/></Field>
+            <Field label="馬可樓辦公室地址"><input value={data.office.address} onChange={e=>update('office.address', e.target.value)}/></Field>
+            <Field label="主日聚會地點">
+              <textarea
+                value={data.office.sundayLocation || ''}
+                onChange={e=>update('office.sundayLocation', e.target.value)}
+                style={{minHeight:'72px'}}
+              />
+            </Field>
           </Card>
         </div>
       );
@@ -1511,7 +1531,7 @@ function App() {
         <div style={{display:'flex', alignItems:'center', gap:'16px'}}>
           <div style={{width:'36px', height:'36px', background:'var(--primary)', borderRadius:'10px', display:'flex', alignItems:'center', justifyContent:'center', color:'var(--on-primary)'}}><span className="material-symbols-outlined">church</span></div>
           <div style={{display:'flex', flexDirection:'column'}}>
-            <div style={{fontSize:'16px', fontWeight:'700', color:'var(--text-main)'}}>風一族週報後台管理系統 v4.7</div>
+            <div style={{fontSize:'16px', fontWeight:'700', color:'var(--text-main)'}}>風一族週報後台管理系統 v4.8</div>
             <div style={{fontSize:'12px', color: isConnected ? 'var(--success)' : 'var(--text-muted)', display:'flex', alignItems:'center', gap:'4px'}}>{isConnected ? <><span className="material-symbols-outlined" style={{fontSize:'14px'}}>cloud_done</span>已連線雲端</> : '○ 載入中...'}</div>
           </div>
           <div style={{fontSize:'12px', color: isOverflowing ? 'var(--danger)' : 'var(--success)', display:'flex', alignItems:'center', gap:'4px', marginLeft:'12px', paddingLeft:'12px', borderLeft:'1px solid var(--border-main)'}}>
